@@ -136,15 +136,29 @@ class MACLauncher:
     def _launch_mac():
         try:
             mac_path = get_location("mac_path")
-            return subprocess.Popen(
-                [mac_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == "win32" else 0
-            )
+            if sys.platform == "win32":
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+                return subprocess.Popen(
+                    [mac_path],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    startupinfo=startupinfo
+                )
+            else:
+                return subprocess.Popen(
+                    [mac_path],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
         except KeyboardInterrupt:
             return None
 
