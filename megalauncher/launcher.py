@@ -30,18 +30,6 @@ def capture_output(process, callback, stop_event):
             callback(processed_line)
 
 
-def send_ctrl_c(pid):
-    if sys.platform == "win32":
-        kernel32 = ctypes.windll.kernel32
-        kernel32.FreeConsole()
-        kernel32.AttachConsole(pid)
-        kernel32.SetConsoleCtrlHandler(None, 1)
-        kernel32.GenerateConsoleCtrlEvent(0, 0)
-        kernel32.SetConsoleCtrlHandler(None, 0)
-    else:
-        os.kill(pid, signal.SIGINT)
-
-
 class MACLauncher:
     def __init__(self):
         self.mac_process = None
@@ -87,7 +75,10 @@ class MACLauncher:
     def stop(self):
         if self.mac_process:
             self.stop_event.set()
-            send_ctrl_c(self.mac_process.pid)
+            if sys.platform == "win32":
+                os.kill(self.mac_process.pid, signal.SIGTERM)
+            else:
+                os.kill(self.mac_process.pid, signal.SIGINT)
             self.mac_process.wait()
             self.output_thread.join()
             self.mac_process = None
@@ -136,29 +127,14 @@ class MACLauncher:
     def _launch_mac():
         try:
             mac_path = get_location("mac_path")
-            if sys.platform == "win32":
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = subprocess.SW_HIDE
-                return subprocess.Popen(
-                    [mac_path],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    startupinfo=startupinfo
-                )
-            else:
-                return subprocess.Popen(
-                    [mac_path],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
+            return subprocess.Popen(
+                [mac_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True,
+            )
         except KeyboardInterrupt:
             return None
 
