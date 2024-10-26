@@ -214,10 +214,8 @@ class MainWindow(QMainWindow):
         self.log_display.clear()
         for line in self.log_lines:
             color = QColor("gray")
-            if line.startswith("INFO"):
-                color = QColor("white")
-            elif line.startswith("WARN"):
-                color = QColor("yellow")
+            if line.startswith("WARN"):
+                color = QColor("orange")
             elif line.startswith("ERROR"):
                 color = QColor("red")
 
